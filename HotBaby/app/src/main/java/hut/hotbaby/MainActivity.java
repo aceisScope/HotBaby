@@ -1,16 +1,27 @@
 package hut.hotbaby;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.hardware.Camera;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Toast;
+
+import java.util.regex.Pattern;
 
 
 public class MainActivity extends Activity {
 
     public static Camera camera = null;// has to be static, otherwise onDestroy() destroys it
-    private RegexThreads[] regexThreads;
-    private NetworkTask[] networkTasks;
+    private RegexThread[] regexThreads;
+//    private NetworkTask[] networkTasks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,11 +88,11 @@ public class MainActivity extends Activity {
         try {
             if (getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_CAMERA_FLASH)) {
-                cam = Camera.open();
-                Parameters p = cam.getParameters();
-                p.setFlashMode(Parameters.FLASH_MODE_TORCH);
-                cam.setParameters(p);
-                cam.startPreview();
+                camera = Camera.open();
+                Camera.Parameters p = camera.getParameters();
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                camera.setParameters(p);
+                camera.startPreview();
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -92,12 +103,12 @@ public class MainActivity extends Activity {
 
     // http://stackoverflow.com/questions/7396766/how-can-i-stress-my-phones-cpu-programatically
     private void burnCPU() {
-        static int NUM_THREADS = 10; // run 10 threads
+        int NUM_THREADS = 10; // run 10 threads
 
         regexThreads = new RegexThread [NUM_THREADS];
 
         for(int i = 0; i < NUM_THREADS; ++i) {
-            RegexThread[i] = new RegexThread(); // create a new thread
+            regexThreads[i] = new RegexThread(); // create a new thread
         }
     }
 
@@ -107,9 +118,9 @@ public class MainActivity extends Activity {
         try {
             if (getPackageManager().hasSystemFeature(
                     PackageManager.FEATURE_CAMERA_FLASH)) {
-                cam.stopPreview();
-                cam.release();
-                cam = null;
+                camera.stopPreview();
+                camera.release();
+                camera = null;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -120,12 +131,12 @@ public class MainActivity extends Activity {
 
     private void stopLocation() {
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        locationManager.removeUpdates(this);
+        locationManager.removeUpdates((LocationListener) this);
     }
 
     private void stopCPU() {
         for (int i = 0; i < regexThreads.length; i++) {
-            RegexThread[i].terminate();
+            regexThreads[i].terminate();
         }
     }
 
@@ -143,7 +154,7 @@ public class MainActivity extends Activity {
         // This is the entry point for the second thread.
         public void run() {
             while(running) {
-                Pattern p = Pattern.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b");
+                Pattern p = Pattern.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b");
             }
         }
 
