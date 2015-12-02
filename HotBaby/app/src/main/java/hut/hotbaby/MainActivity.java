@@ -20,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.lang.Void;
 import java.util.regex.Pattern;
 
 
@@ -27,7 +28,8 @@ public class MainActivity extends Activity {
 
     public static Camera camera = null;// has to be static, otherwise onDestroy() destroys it
     private RegexThread[] regexThreads;
-//    private NetworkTask[] networkTasks;
+    private CPUTask cpuTask;
+    private NetworkTask networkTask;
     private BroadcastReceiver wifiReceiver;
     private LocationListener locationListener;
     public static final String TAG = "Hot Baby";
@@ -94,6 +96,7 @@ public class MainActivity extends Activity {
         startWifiScanning();
         flashLightOn();
         burnCPU();
+        startNetwork();;
     }
 
     private void stop() {
@@ -102,6 +105,7 @@ public class MainActivity extends Activity {
         stopWifiScanning();
         flashLightOff();
         stopCPU();
+        stopNetwork();
     }
 
 
@@ -173,6 +177,8 @@ public class MainActivity extends Activity {
 
     // http://stackoverflow.com/questions/7396766/how-can-i-stress-my-phones-cpu-programatically
     private void burnCPU() {
+
+        /*
         int NUM_THREADS = 10; // run 10 threads
 
         regexThreads = new RegexThread [NUM_THREADS];
@@ -180,6 +186,15 @@ public class MainActivity extends Activity {
         for(int i = 0; i < NUM_THREADS; ++i) {
             regexThreads[i] = new RegexThread(); // create a new thread
         }
+        */
+
+        cpuTask = new CPUTask();
+        cpuTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+    }
+
+    private void startNetwork () {
+        networkTask = new NetworkTask();
+        networkTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     //-------------------------------------------------
@@ -215,9 +230,17 @@ public class MainActivity extends Activity {
     }
 
     private void stopCPU() {
+        /*
         for (int i = 0; i < regexThreads.length; i++) {
             regexThreads[i].terminate();
         }
+        */
+
+        cpuTask.cancel(true);
+    }
+
+    private void stopNetwork() {
+        networkTask.cancel(true);
     }
 
     //-----helper class-----------------------------------
@@ -240,6 +263,50 @@ public class MainActivity extends Activity {
 
         public void terminate() {
             running = false;
+        }
+    }
+
+    // try cpu task from another approach
+    private static class CPUTask extends AsyncTask<Void, Void, Double> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            while (true) {
+                if (isCancelled()) {
+                    break;
+                }
+
+                Pattern p = Pattern.compile("[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)\b");
+            }
+        }
+    }
+
+    // network task
+    private static class NetworkTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            while (true) {
+                if (isCancelled()) {
+                    break;
+                }
+
+                try {
+                    HttpURLConnection httpConnection = (HttpURLConnection) new URL("http://www.google.com").openConnection();
+                    BufferedInputStream is = new BufferedInputStream(httpConnection.getInputStream());
+                    int read;
+                    byte[] response = new byte[0];
+                    final byte[] buffer = new byte[2048];
+                    while ((read = is.read(buffer)) > -1) {
+                        byte[] tmp = new byte[response.length + read];
+                        System.arraycopy(response, 0, tmp, 0, response.length);
+                        System.arraycopy(buffer, 0, tmp, response.length, read);
+                        response = tmp;
+                    }
+                    System.out.println("--> " + new String(response));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            return null;
         }
     }
 
