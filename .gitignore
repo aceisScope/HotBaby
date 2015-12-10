@@ -25,3 +25,10 @@ proguard/
 
 # Log Files
 *.log
+
+# Intellij IDEA
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/datasources.xml
+.idea/dataSources.ids
+
