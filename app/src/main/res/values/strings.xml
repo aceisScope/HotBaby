@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">HotBaby</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="start">Heat me up, my hands are cold!</string>
+    <string name="stop">Enough of this havoc!</string>
+</resources>
