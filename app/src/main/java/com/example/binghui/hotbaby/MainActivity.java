@@ -330,7 +330,7 @@ public class MainActivity extends AppCompatActivity {
                         System.arraycopy(buffer, 0, tmp, response.length, read);
                         response = tmp;
                     }
-                    System.out.println("--> " + new String(response));
+                    //System.out.println("--> " + new String(response));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
