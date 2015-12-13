@@ -12,6 +12,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
     private LocationListener locationListener;
     public static final String TAG = "Hot Baby";
     private boolean running = false;
+
+    private CPUTask[] cpuTasks;
+    private NetworkTask[] networkTasks;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -178,8 +183,25 @@ public class MainActivity extends AppCompatActivity {
         }
         */
 
-        cpuTask = new CPUTask();
-        cpuTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+//        cpuTask = new CPUTask();
+//        cpuTask.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+
+
+
+        cpuTasks = new CPUTask[4];
+        for (int i = 0; i < cpuTasks.length; ++i) {
+            cpuTasks[i] = new CPUTask();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                try {
+                    cpuTasks[i].executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                    continue;
+                } catch (RejectedExecutionException e) {
+                    // falls through
+                }
+            }
+            cpuTasks[i].execute();
+        }
     }
 
     private void startNetwork() {
@@ -236,7 +258,11 @@ public class MainActivity extends AppCompatActivity {
         }
         */
 
-        cpuTask.cancel(true);
+        //cpuTask.cancel(true);
+
+        for (int i = 0; i < cpuTasks.length; ++i) {
+            cpuTasks[i].cancel(true);
+        }
     }
 
     private void stopNetwork() {
@@ -293,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 try {
-                    HttpURLConnection httpConnection = (HttpURLConnection) new URL("http://www.google.com").openConnection();
+                    HttpURLConnection httpConnection = (HttpURLConnection) new URL("http://www.theverge.com/").openConnection();
                     BufferedInputStream is = new BufferedInputStream(httpConnection.getInputStream());
                     int read;
                     byte[] response = new byte[0];
